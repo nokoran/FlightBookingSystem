@@ -1,4 +1,4 @@
-﻿namespace FlightBookingSystem.API;
+namespace FlightBookingSystem.API;
 
 public class Program
 {
