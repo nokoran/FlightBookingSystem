@@ -1,4 +1,4 @@
-﻿namespace FlightBookingSystem.Application.Interfaces;
+﻿namespace FlightBookingSystem.Application.Services;
 
 public class BookingService
 {
