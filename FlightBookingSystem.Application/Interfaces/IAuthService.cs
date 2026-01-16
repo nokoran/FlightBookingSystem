@@ -1,6 +1,9 @@
-﻿namespace FlightBookingSystem.Application.Interfaces;
+﻿using FlightBookingSystem.Application.DTOs;
 
-public class IAuthService
+namespace FlightBookingSystem.Application.Interfaces;
+
+public interface IAuthService
 {
-    
+    Task<bool> RegisterAsync(RegisterDto dto);
+    Task<string> LoginAsync(LoginDto dto); // returns JWT token
 }
