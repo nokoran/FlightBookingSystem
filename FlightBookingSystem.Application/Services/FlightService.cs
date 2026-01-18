@@ -85,6 +85,24 @@ public class FlightService : IFlightService
         };
     }
 
+    public async Task<IEnumerable<SeatDto>> GetSeatsByFlightIdAsync(int flightId)
+    {
+        var flight = await _repository.GetByIdAsync(flightId);
+
+        if (flight == null)
+            throw new KeyNotFoundException("Рейс не знайдено.");
+
+        // mapping Entities to DTOs and ordering by Seat id
+        return flight.Seats
+            .OrderBy(s => s.Id) 
+            .Select(s => new SeatDto
+            {
+                Id = s.Id,
+                SeatNumber = s.SeatNumber,
+                IsBooked = s.IsBooked
+            });
+    }
+    
     public async Task UpdateFlightAsync(int id, CreateFlightDto dto)
     {
         var flight = await _repository.GetByIdAsync(id);

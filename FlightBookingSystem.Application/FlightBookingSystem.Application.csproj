@@ -2,6 +2,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\FlightBookingSystem.Domain\FlightBookingSystem.Domain.csproj" />
+      <ProjectReference Include="..\FlightBookingSystem.Infrastructure\FlightBookingSystem.Infrastructure.csproj" />
     </ItemGroup>
 
     <ItemGroup>

@@ -83,7 +83,11 @@ builder.Services.AddSwaggerGen(c =>
 // registering services and repositories
 builder.Services.AddScoped<IFlightRepository, FlightRepository>();
 builder.Services.AddScoped<IFlightService, FlightService>();
+
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+builder.Services.AddScoped<IBookingRepository, BookingRepository>();
+builder.Services.AddScoped<IBookingService, BookingService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -104,5 +108,20 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+//initialize database and create admin user
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        await DbInitializer.Initialize(services);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Сталася помилка під час ініціалізації бази даних (створення адміна).");
+    }
+}
 
 app.Run();

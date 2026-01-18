@@ -1,5 +1,6 @@
 ﻿using FlightBookingSystem.Application.DTOs;
 using FlightBookingSystem.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlightBookingSystem.API.Controllers;
@@ -17,6 +18,7 @@ public class FlightsController : ControllerBase
 
     // POST: api/Flights
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create([FromBody] CreateFlightDto dto)
     {
         await _service.CreateFlightAsync(dto);
@@ -39,9 +41,25 @@ public class FlightsController : ControllerBase
         if (flight == null) return NotFound(new { message = "Рейс не знайдено" });
         return Ok(flight);
     }
+    
+    // GET: api/Flights/5/seats
+    [HttpGet("{id}/seats")]
+    public async Task<IActionResult> GetSeats(int id)
+    {
+        try
+        {
+            var seats = await _service.GetSeatsByFlightIdAsync(id);
+            return Ok(seats);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { message = "Рейс не знайдено." });
+        }
+    }
 
     // PUT: api/Flights/5
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(int id, [FromBody] CreateFlightDto dto)
     {
         try
@@ -57,6 +75,7 @@ public class FlightsController : ControllerBase
 
     // DELETE: api/Flights/5
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
     {
         try

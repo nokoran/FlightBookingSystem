@@ -44,13 +44,6 @@ public class AuthService : IAuthService
 
         if (result.Succeeded)
         {
-            // create roles if they do not exist
-            if (!await _roleManager.RoleExistsAsync("Passenger"))
-                await _roleManager.CreateAsync(new IdentityRole("Passenger"));
-
-            if (!await _roleManager.RoleExistsAsync("Admin"))
-                await _roleManager.CreateAsync(new IdentityRole("Admin"));
-
             // assign "Passenger" role to the new user
             await _userManager.AddToRoleAsync(user, "Passenger");
             return true;
