@@ -16,6 +16,9 @@ public class Booking
     public Flight Flight { get; set; }
 
     // which seat?
-    public int SeatId { get; set; }
-    public Seat Seat { get; set; }
+    public int RowId { get; set; }
+    public Row Row { get; set; }
+    
+    public int LetterId { get; set; }
+    public SeatLetter Letter { get; set; }
 }

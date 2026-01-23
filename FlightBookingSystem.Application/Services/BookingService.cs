@@ -16,32 +16,33 @@ public class BookingService : IBookingService
         _flightRepository = flightRepository;
     }
 
-    public async Task BookSeatAsync(BookingDto dto, string userId)
+    public async Task BookSeatAsync(CreateBookingDto dto, string userId)
     {
         // get flight with seats
         var flight = await _flightRepository.GetByIdAsync(dto.FlightId);
 
         if (flight == null)
-            throw new Exception("Рейс не знайдено.");
+            throw new KeyNotFoundException("Рейс не знайдено.");
 
         // logic for booking seat
-        var seat = flight.Seats.FirstOrDefault(s => s.SeatNumber == dto.SeatNumber);
-        // check if seat exists
-        if (seat == null)
-            throw new Exception($"Місце {dto.SeatNumber} не знайдено на цьому рейсі.");
-
-        // check if seat is already booked
-        if (seat.IsBooked)
-            throw new Exception("Це місце вже зайняте.");
+        if (dto.RowId > flight.Rows || dto.RowId < 1)
+            throw new ArgumentException("Неправильний номер ряду.");
+        if (dto.LetterId > flight.SeatsPerRow || dto.LetterId < 1)
+            throw new ArgumentException("Неправильна літера місця.");
         
-        // create booking
-        seat.IsBooked = true;
-
+        
+        // check if seat is already booked
+        bool isBooked = await _bookingRepository.BookingExistsAsync(dto.FlightId, dto.RowId, dto.LetterId);
+        if (isBooked)
+            throw new InvalidOperationException("Це місце вже зайняте.");
+        
+        
         var booking = new Booking
         {
             UserId = userId,
             FlightId = flight.Id,
-            SeatId = seat.Id,
+            RowId = dto.RowId,
+            LetterId = dto.LetterId,
             BookingDate = DateTime.UtcNow,
             IsCancelled = false
         };
@@ -61,30 +62,24 @@ public class BookingService : IBookingService
             throw new UnauthorizedAccessException("Ви не можете скасувати чуже бронювання.");
 
         if (booking.IsCancelled)
-            throw new Exception("Бронювання вже скасовано.");
-
-        // Soft delete
+            throw new InvalidOperationException("Бронювання вже скасовано.");
+        
         booking.IsCancelled = true;
-
-        // Free up the seat
-        if (booking.Seat != null)
-        {
-            booking.Seat.IsBooked = false;
-        }
 
         await _bookingRepository.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<object>> GetMyBookingsAsync(string userId)
+    public async Task<IEnumerable<BookingDto>> GetMyBookingsAsync(string userId)
     {
         var bookings = await _bookingRepository.GetByUserIdAsync(userId);
         
-        return bookings.Select(b => new
+        return bookings.Select(b => new BookingDto
         {
             BookingId = b.Id,
-            Flight = b.Flight.FlightNumber,
-            Route = $"{b.Flight.DepartureCity} -> {b.Flight.ArrivalCity}",
-            Seat = b.Seat.SeatNumber,
+            FlightNumber = b.Flight.FlightNumber,
+            DepartureCity = b.Flight.DepartureCity,
+            ArrivalCity = b.Flight.ArrivalCity,
+            Seat = $"{b.Row.RowNumber}{b.Letter.Letter}",
             Date = b.BookingDate,
             IsCancelled = b.IsCancelled
         });

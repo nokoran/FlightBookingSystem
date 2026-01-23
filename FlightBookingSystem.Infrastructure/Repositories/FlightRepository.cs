@@ -18,14 +18,13 @@ public class FlightRepository : IFlightRepository
     {
         // flight with seats
         return await _context.Flights
-            .Include(f => f.Seats)
             .FirstOrDefaultAsync(f => f.Id == id);
     }
 
-    public async Task DeleteAsync(Flight flight)
+    public Task DeleteAsync(Flight flight)
     {
         _context.Flights.Remove(flight);
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
     
     public async Task AddAsync(Flight flight)
@@ -35,7 +34,7 @@ public class FlightRepository : IFlightRepository
 
     public async Task<IEnumerable<Flight>> GetAllAsync()
     {
-        return await _context.Flights.Include(f => f.Seats).ToListAsync();
+        return await _context.Flights.ToListAsync();
     }
 
     public async Task SaveChangesAsync()

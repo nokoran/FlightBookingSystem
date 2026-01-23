@@ -8,6 +8,6 @@ public interface IFlightService
     Task<IEnumerable<FlightDto>> GetAllFlightsAsync();
     Task<FlightDto?> GetFlightByIdAsync(int id);
     Task<IEnumerable<SeatDto>> GetSeatsByFlightIdAsync(int flightId);
-    Task UpdateFlightAsync(int id, CreateFlightDto dto);
+    Task UpdateFlightAsync(int id, UpdateFlightDto dto);
     Task DeleteFlightAsync(int id);
 }

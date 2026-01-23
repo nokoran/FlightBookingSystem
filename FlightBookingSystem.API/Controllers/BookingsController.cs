@@ -20,7 +20,7 @@ public class BookingsController : ControllerBase
 
     // POST: api/Bookings
     [HttpPost]
-    public async Task<IActionResult> Book([FromBody] BookingDto dto)
+    public async Task<IActionResult> Book([FromBody] CreateBookingDto dto)
     {
         try
         {

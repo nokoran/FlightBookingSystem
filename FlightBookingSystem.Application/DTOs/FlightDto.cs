@@ -8,5 +8,6 @@ public class FlightDto
     public string ArrivalCity { get; set; }
     public DateTime DepartureTime { get; set; }
     public DateTime ArrivalTime { get; set; }
-    public int TotalSeats { get; set; }
+    public int Rows { get; set; }
+    public int SeatsPerRow { get; set; }
 }

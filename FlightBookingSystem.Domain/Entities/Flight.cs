@@ -8,6 +8,7 @@ public class Flight
     public string ArrivalCity { get; set; } = string.Empty;
     public DateTime DepartureTime { get; set; }
     public DateTime ArrivalTime { get; set; }
+    public int Rows { get; set; } = 20;
+    public int SeatsPerRow { get; set; } = 6;
     
-    public ICollection<Seat> Seats { get; set; } = new List<Seat>();
 }

@@ -8,8 +8,8 @@ namespace FlightBookingSystem.Application.Interfaces;
 
 public interface IBookingService
 {
-    public Task BookSeatAsync(BookingDto dto, string userId);
+    public Task BookSeatAsync(CreateBookingDto dto, string userId);
     Task CancelBookingAsync(int bookingId, string userId);
-    public Task<IEnumerable<object>> GetMyBookingsAsync(string userId);
+    public Task<IEnumerable<BookingDto>> GetMyBookingsAsync(string userId);
     
 }

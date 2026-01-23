@@ -2,7 +2,7 @@
 
 namespace FlightBookingSystem.Application.DTOs;
 
-public class CreateFlightDto
+public class UpdateFlightDto
 {
     [Required]
     public string FlightNumber { get; set; }
@@ -18,6 +18,6 @@ public class CreateFlightDto
     // additional properties for seat configuration
     [Range(1, 50)]
     public int Rows { get; set; } = 20; // quantity of rows
-    [Range(1, 26)]
+    [Range(1, 10)]
     public int SeatsPerRow { get; set; } = 6; // quantity of seats per row
 }

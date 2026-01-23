@@ -60,7 +60,7 @@ public class FlightsController : ControllerBase
     // PUT: api/Flights/5
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Update(int id, [FromBody] CreateFlightDto dto)
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateFlightDto dto)
     {
         try
         {

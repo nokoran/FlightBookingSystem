@@ -7,11 +7,13 @@ namespace FlightBookingSystem.Application.Services;
 
 public class FlightService : IFlightService
 {
-    private readonly IFlightRepository _repository;
+    private readonly IFlightRepository _flightRepository;
+    private readonly IBookingRepository _bookingRepository;
 
-    public FlightService(IFlightRepository repository)
+    public FlightService(IFlightRepository flightRepository, IBookingRepository bookingRepository)
     {
-        _repository = repository;
+        _flightRepository = flightRepository;
+        _bookingRepository = bookingRepository;
     }
 
     public async Task CreateFlightAsync(CreateFlightDto dto)
@@ -23,36 +25,18 @@ public class FlightService : IFlightService
             DepartureCity = dto.DepartureCity,
             ArrivalCity = dto.ArrivalCity,
             DepartureTime = dto.DepartureTime,
-            ArrivalTime = dto.ArrivalTime
+            ArrivalTime = dto.ArrivalTime,
+            Rows = dto.Rows,
+            SeatsPerRow = dto.SeatsPerRow,
         };
-
-        // generate seats
-        string seatLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         
-        if (dto.SeatsPerRow > seatLetters.Length)
-        {
-            throw new ArgumentException($"Максимальна кількість місць у ряду: {seatLetters.Length}");
-        }
-            
-        for (int r = 1; r <= dto.Rows; r++)
-        {
-            for (int s = 0; s < dto.SeatsPerRow; s++)
-            {
-                flight.Seats.Add(new Seat
-                {
-                    SeatNumber = $"{r}{seatLetters[s]}",
-                    IsBooked = false
-                });
-            }
-        }
-
-        await _repository.AddAsync(flight);
-        await _repository.SaveChangesAsync();
+        await _flightRepository.AddAsync(flight);
+        await _flightRepository.SaveChangesAsync();
     }
 
     public async Task<IEnumerable<FlightDto>> GetAllFlightsAsync()
     {
-        var flights = await _repository.GetAllAsync();
+        var flights = await _flightRepository.GetAllAsync();
             
         // mapping Entities to DTO
         return flights.Select(f => new FlightDto
@@ -63,14 +47,15 @@ public class FlightService : IFlightService
             ArrivalCity = f.ArrivalCity,
             DepartureTime = f.DepartureTime,
             ArrivalTime = f.ArrivalTime,
-            TotalSeats = f.Seats.Count
+            Rows = f.Rows,
+            SeatsPerRow = f.SeatsPerRow
         });
     }
     
     public async Task<FlightDto?> GetFlightByIdAsync(int id)
     {
         // mapping Entity to DTO
-        var f = await _repository.GetByIdAsync(id);
+        var f = await _flightRepository.GetByIdAsync(id);
         if (f == null) return null;
 
         return new FlightDto
@@ -81,31 +66,40 @@ public class FlightService : IFlightService
             ArrivalCity = f.ArrivalCity,
             DepartureTime = f.DepartureTime,
             ArrivalTime = f.ArrivalTime,
-            TotalSeats = f.Seats.Count
+            Rows = f.Rows,
+            SeatsPerRow = f.SeatsPerRow
         };
     }
 
     public async Task<IEnumerable<SeatDto>> GetSeatsByFlightIdAsync(int flightId)
     {
-        var flight = await _repository.GetByIdAsync(flightId);
+        var flight = await _flightRepository.GetByIdAsync(flightId);
 
         if (flight == null)
             throw new KeyNotFoundException("Рейс не знайдено.");
-
-        // mapping Entities to DTOs and ordering by Seat id
-        return flight.Seats
-            .OrderBy(s => s.Id) 
-            .Select(s => new SeatDto
+        
+        var bookings = await _bookingRepository.GetBookingsByFlightIdAsync(flightId);
+        
+        var bookedSeats = bookings.Select(b => (b.RowId, b.LetterId)).ToHashSet();
+        var seats = new List<SeatDto>();
+        
+        for (int row = 1; row <= flight.Rows; row++)
+        {
+            for (int letter = 1; letter <= flight.SeatsPerRow; letter++)
             {
-                Id = s.Id,
-                SeatNumber = s.SeatNumber,
-                IsBooked = s.IsBooked
-            });
+                seats.Add(new SeatDto
+                {
+                    SeatNumber = $"{row}{(char)('A' + letter - 1)}",
+                    IsBooked = bookedSeats.Contains((row, letter))
+                });
+            }
+        }
+        return seats;
     }
     
-    public async Task UpdateFlightAsync(int id, CreateFlightDto dto)
+    public async Task UpdateFlightAsync(int id, UpdateFlightDto dto)
     {
-        var flight = await _repository.GetByIdAsync(id);
+        var flight = await _flightRepository.GetByIdAsync(id);
         if (flight == null) throw new KeyNotFoundException("Рейс не знайдено");
 
         // updating fields
@@ -114,16 +108,18 @@ public class FlightService : IFlightService
         flight.ArrivalCity = dto.ArrivalCity;
         flight.DepartureTime = dto.DepartureTime;
         flight.ArrivalTime = dto.ArrivalTime;
+        flight.Rows = dto.Rows;
+        flight.SeatsPerRow = dto.SeatsPerRow;
 
-        await _repository.SaveChangesAsync();
+        await _flightRepository.SaveChangesAsync();
     }
 
     public async Task DeleteFlightAsync(int id)
     {
-        var flight = await _repository.GetByIdAsync(id);
+        var flight = await _flightRepository.GetByIdAsync(id);
         if (flight == null) throw new KeyNotFoundException("Рейс не знайдено");
 
-        await _repository.DeleteAsync(flight);
-        await _repository.SaveChangesAsync();
+        await _flightRepository.DeleteAsync(flight);
+        await _flightRepository.SaveChangesAsync();
     }
 }

@@ -10,36 +10,48 @@ namespace FlightBookingSystem.Tests;
 public class FlightServiceTests
 {
     private readonly Mock<IFlightRepository> _flightRepoMock;
+    private readonly Mock<IBookingRepository> _bookingRepoMock;
     private readonly FlightService _flightService;
 
     public FlightServiceTests()
     {
         _flightRepoMock = new Mock<IFlightRepository>();
-        _flightService = new FlightService(_flightRepoMock.Object);
+        _bookingRepoMock = new Mock<IBookingRepository>();
+        _flightService = new FlightService(_flightRepoMock.Object, _bookingRepoMock.Object);
     }
 
     [Fact]
     public async Task CreateFlight_ShouldGenerateCorrectNumberOfSeats()
     {
         // Arrange
-        var dto = new CreateFlightDto
-        {
-            FlightNumber = "TEST100",
-            DepartureCity = "Kyiv",
-            ArrivalCity = "Lviv",
-            DepartureTime = DateTime.Now.AddDays(1),
-            ArrivalTime = DateTime.Now.AddDays(1).AddHours(2),
-            Rows = 10, // 10 rows
-            SeatsPerRow = 6 // 6 seats per row (A-F)
+        var flightId = 777;
+        var flight = new Flight 
+        { 
+            Id = flightId, 
+            Rows = 2, 
+            SeatsPerRow = 2 
         };
+        
+        var existingBookings = new List<Booking>
+        {
+            new Booking { RowId = 1, LetterId = 1, IsCancelled = false},
+            new Booking { RowId = 2, LetterId = 1, IsCancelled = false }
+        };
+        
+        _flightRepoMock.Setup(r => r.GetByIdAsync(flightId))
+            .ReturnsAsync(flight);
+
+        _bookingRepoMock.Setup(r => r.GetBookingsByFlightIdAsync(flightId))
+            .ReturnsAsync(existingBookings);
 
         // Act
-        await _flightService.CreateFlightAsync(dto);
+        var result = await _flightService.GetSeatsByFlightIdAsync(flightId);
 
         // Assert
-        _flightRepoMock.Verify(repo => repo.AddAsync(It.Is<Flight>(f =>
-                f.FlightNumber == "TEST100" &&
-                f.Seats.Count == 60 // 10 * 6 = 60
-        )), Times.Once);
+        Assert.Equal(4, result.Count());
+        Assert.Contains(result, s => s is { SeatNumber: "1A", IsBooked: true });
+        Assert.Contains(result, s => s is { SeatNumber: "1B", IsBooked: false });
+        Assert.Contains(result, s => s is { SeatNumber: "2A", IsBooked: true });
+        Assert.Contains(result, s => s is { SeatNumber: "2B", IsBooked: false });
     }
 }
